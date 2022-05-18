@@ -1,0 +1,85 @@
+MusicPlayerGUI := Window {
+    background: #206a73ff;
+    property<string> CurSongArtist: "none";
+    property<string> CurSongTitle: "none";
+    property<string> CurSongGenre: "none";
+    property<string> CurSongAlbum: "none";
+    property<string> TimePlayed: "00:00";
+    property<string> TotalLength: "00:00";
+    callback prev_song();
+    callback toggle_pause();
+    callback next_song();
+    VerticalLayout {
+        CurrentSongPreview := Rectangle {
+            background: #70534252;
+            VerticalLayout {
+                HorizontalLayout {
+                    Text {
+                        text: "Artist: " + root.CurSongArtist;
+                        color: #f0aa43ff;
+                        font-size: 30px;
+                    }
+                    Text {
+                        text: "Title: " + root.CurSongTitle;
+                        color: #f0aa43ff;
+                        font-size: 30px;
+                    }
+                }
+                HorizontalLayout {
+                    Text {
+                        text: "Genre: " + root.CurSongAlbum;
+                        color: #f0aa43ff;
+                        font-size: 30px;
+                    }
+                    Text {
+                        text: "Album: " + root.CurSongGenre;
+                        color: #f0aa43ff;
+                        font-size: 30px;
+                    }
+                }
+                Text {
+                    text: "played: " + root.TimePlayed + "/" + root.TotalLength;
+                    color: #1d1b17;
+                    font-size: 30px;
+                }
+                //TODO: add song cover art/image
+                //TODO: add volume
+            }
+        }
+        PlayControlBox := HorizontalLayout {
+            //previous song button
+            Rectangle {
+                background: #535453;
+                Text {
+                    font-size: 30px;
+                    text: "prev";
+                    TouchArea {
+                        clicked => { root.prev_song() }
+                    }
+                }
+            }
+            //play/pause button
+            Rectangle {
+                background: #a35433;
+                Text {    
+                    font-size: 30px;
+                    text: "play/pause";
+                    TouchArea {
+                        clicked => { root.toggle_pause() }
+                    }
+                }
+            }
+            //next song button
+            Rectangle {
+                background: #535434;
+                Text {
+                    font-size: 30px;
+                    text: "next";
+                    TouchArea {
+                        clicked => { root.next_song() }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -9,3 +9,6 @@ A music player intended to allow you to easily queue specific tracks without hav
 - powerful - users should be able to find and play music in a powerful dynamically-parsed manner
 - efficient - frequent actions should be able to be executed in minimal keystrokes
 - keyboard oriented - users should be able to easily and intuitively do everything using just the keyboard
+
+
+upcoming: equalizer

@@ -1,1 +1,5 @@
 /target
+.vscode/
+Cargo.lock
+**/*.~undo-tree~
+bkp_main.rs_dump.txt
