@@ -41,6 +41,7 @@ fn main() {
         }
     });
 
+    const NULL_TAG_VALUE_STR: &str = "unknown";
 
     //function to be called in order to stop the current song and play a new one from the given file
     let fast_forward_to_new_song = |gui: MusicPlayerGUI, song_location, sink: &Arc<RwLock<Sink>>| {
@@ -52,15 +53,69 @@ fn main() {
             tagged_file.first_tag().unwrap()
         });
 
-        gui.set_CurSongArtist(tag.artist().unwrap().into());
-        gui.set_CurSongTitle(tag.title().unwrap().into());
-       //TODO: actually handle the absence of specific tags properties and send <appropriately to display in the GUI
-        // music_player_gui.set_CurSongGenre(tag.genre().unwrap().into());
-        // music_player_gui.set_CurSongAlbum(tag.album().unwrap().into());
+        // display the current song's tag's artist
+        //TODO: if not found in this tag, maybe look for other tags in the file and source from there?? Also check user-defined db when that's implemented (will override the rest if found)
+            match tag.artist() {
+                Some(artist_name) => {
+                    gui.set_CurSongArtist(artist_name.into());
+                }
+                //TODO: log this, maybe
+                None => {
+                gui.set_CurSongArtist(NULL_TAG_VALUE_STR.into());
+                }
+            }
+
+        // display the current song's tag's title
+            match tag.title() {
+                Some(title_name) => {
+                    gui.set_CurSongTitle(title_name.into());
+                }
+                //TODO: log this, maybe
+                None => {
+                gui.set_CurSongTitle(NULL_TAG_VALUE_STR.into());
+                }
+            }
+
+        // display the current song's tag's genre in the GUI
+            match tag.genre() {
+                Some(genre_name) => {
+                    gui.set_CurSongGenre(genre_name.into());
+                }
+                //TODO: log this, maybe
+                None => {
+                gui.set_CurSongGenre(NULL_TAG_VALUE_STR.into());
+                }
+            }
+
+        // display the current song's tag's album in the GUI
+            match tag.album() {
+                Some(album_name) => {
+                    gui.set_CurSongAlbum(album_name.into());
+                }
+                //TODO: log this, maybe
+                None => {
+                gui.set_CurSongAlbum(NULL_TAG_VALUE_STR.into());
+                }
+            }
+
 
         //TODO: actually display the length nicely
-        let song_length = tagged_file.properties().duration();
-        gui.set_TotalLength(song_length.as_secs().to_string().into());
+        // get the total length of the current song from the Tag and display it in the GUI
+            let song_length = tagged_file.properties().duration();
+            let raw_secs = song_length.as_secs();
+            
+            let mut secs = raw_secs % 60;
+            // because the `as_secs()` method returns only the whole seconds without rounding, we use this to round the song length to the nearest second
+            if song_length.subsec_millis() >= 500 {
+                secs += 1;
+            }
+            let secs = secs;
+
+            let mins = raw_secs / 60;
+            //NOTE: songs over an hour long will display the minutes of the song instead of hours plus the minutes mod 60. This is easy to change if deemed better to display the hours too
+            // nitpick: very minor, but I dislike the wasteful allocations here
+            let length_string = mins.to_string() + ":" + &secs.to_string();
+            gui.set_TotalLength(length_string.into());
 
 
 
