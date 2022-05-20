@@ -9,7 +9,7 @@ use rodio::{Decoder, OutputStream, source::Source, Sink};
 use lofty::{read_from, Accessor, read_from_path, Tag, AudioFile};
 use std::path::Path;
 use parking_lot::RwLock;
-
+use clap::{crate_version, Arg, Command};
 
 slint::include_modules!();
 
@@ -19,6 +19,47 @@ static mut TIME_PLAYED: isize = -1;
 
 fn main() {
     println!("Starting the program...");
+
+
+    let matches = Command::new("muxt")
+    .author("mwaitzman, mwaitzman@outlook.com")
+    .version(crate_version!())
+    .about("A keyboard-oriented and lightweight music player, written in Rust")
+    .arg(
+        Arg::new("song files")
+            .id("song_files")
+            .long("songs")
+            .alias("song_files")
+            .alias("song-files")
+            .short('f')
+            .takes_value(true)
+            .multiple_values(true)
+            .required(true),
+    )
+    .get_matches();
+
+let song_files = matches
+    .values_of("song_files")
+    .expect("no song files were inputted!")
+    .into_iter();
+
+
+    let mut songs = Vec::with_capacity(song_files.len());
+    song_files
+    //TODO: optimize the performance and memory usage of this
+    .for_each(|file| {
+        if let Ok(song_probe) = lofty::Probe::open(file) {
+            //TODO: better handle directories
+            match song_probe.guess_file_type() {
+                Ok(_probe) => songs.push(file),
+                Err(e) => eprintln!("error when reading file \"{}\": {e}", &file)
+            }
+        }
+        else {
+            eprintln!("file \"{}\" does not exist! Skipping...", &file);
+        }
+    });
+
 
 
     //CAUTION: stream must not be dropped or the program will panic!
@@ -125,60 +166,59 @@ fn main() {
 
 
 
-    // finally, discard the old song and play the new one
-    let file = BufReader::new(File::open(song_location).unwrap());
-    let src = Decoder::new(file).unwrap();
+        // finally, discard the old song and play the new one
+        let file = BufReader::new(File::open(song_location).unwrap());
+        let src = Decoder::new(file).unwrap();
 
-    let old_sink = sink.read();
+        let old_sink = sink.read();
 
-    let is_paused = old_sink.is_paused();
-    sink.read().stop();
-    drop(old_sink);
-    let new_sink = Sink::try_new(&output_stream_handle).unwrap();
-    
-    // keep playback paused
-    //NOTE: intentionally done before the new song is appended so there's no chance the new song plays a frame or two before the pause call is executed
-    if is_paused {
-        new_sink.pause();
-    }
+        let is_paused = old_sink.is_paused();
+        sink.read().stop();
+        drop(old_sink);
+        let new_sink = Sink::try_new(&output_stream_handle).unwrap();
+        
+        // keep playback paused
+        //NOTE: intentionally done before the new song is appended so there's no chance the new song plays a frame or two before the pause call is executed
+        if is_paused {
+            new_sink.pause();
+        }
 
-    // add functionality so the GUI's accurately tracks the time remaining to the song
-        let gui_weak = gui.as_weak();
-        // set to -1 so the initial call will set it to 0. Otherwise, it'd always display 1 second more than it actually is
-        unsafe { TIME_PLAYED = -1; }
-        let src = src.periodic_access(Duration::SECOND,
-            move |_| {
-                let time_played = unsafe { 
-                    TIME_PLAYED += 1;
-                    TIME_PLAYED
-                };
+        // add functionality so the GUI accurately tracks the time remaining of the song
+            let gui_weak = gui.as_weak();
+            // set to -1 so the initial call will set it to 0. Otherwise, it'd always display 1 second more than it actually is
+            unsafe { TIME_PLAYED = -1; }
+            let src = src.periodic_access(Duration::SECOND,
+                move |_| {
+                    let time_played = unsafe { 
+                        TIME_PLAYED += 1;
+                        TIME_PLAYED
+                    };
 
-                
-                let secs = time_played % 60;
-                let mins = time_played / 60;
-                //NOTE: songs over an hour long will display the minutes of the song instead of hours plus the minutes mod 60. This is easy to change if deemed better to display the hours too
-                let length_string = format!("{}:{:02}", mins, secs);
+                    
+                    let secs = time_played % 60;
+                    let mins = time_played / 60;
+                    //NOTE: songs over an hour long will display the minutes of the song instead of hours plus the minutes mod 60. This is easy to change if deemed better to display the hours too
+                    let length_string = format!("{}:{:02}", mins, secs);
 
-                gui_weak.upgrade_in_event_loop(
-                    move |handle| {
-                        handle.set_TimePlayed(length_string.into())
-                    }
-                );
-            }
-        );
+                    gui_weak.upgrade_in_event_loop(
+                        move |handle| {
+                            handle.set_TimePlayed(length_string.into())
+                        }
+                    );
+                }
+            );
 
-    new_sink.append(src);
+        new_sink.append(src);
 
-    *sink.write() = new_sink;
+        *sink.write() = new_sink;
     };
 
 
 
 
     let music_player_gui_clone = music_player_gui.clone_strong();
-    let path = Path::new("/mnt/win10/Users/kon-boot/Music/SoundCloud_Favorites/Retrograde & Xomu - Valhalla.mp3");
     let sink = Arc::clone(&cloner_sink);
-    fast_forward_to_new_song(music_player_gui_clone, path, &sink);
+    fast_forward_to_new_song(music_player_gui_clone, songs[0], &sink);
     drop(sink);
 
 

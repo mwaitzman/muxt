@@ -36,6 +36,9 @@ fastrand = "*"
 # for better synchronization primitives
 parking_lot = "0.12"
 
+# for command line argument parsing
+clap = { version = "3", features = ["cargo"]}
+
 
 
 [build-dependencies]
