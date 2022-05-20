@@ -1,4 +1,5 @@
-# muxt, a keyboard-only music player
+# muxt, a keyboard-oriented music player, written in Rust
+![AGPL3_logo](https://www.gnu.org/graphics/agplv3-with-text-162x68.png)
 
 A music player intended to allow you to easily queue specific tracks without having to do a lot of searching, and with advanced filtering and grouping options
 
@@ -11,4 +12,9 @@ A music player intended to allow you to easily queue specific tracks without hav
 - keyboard oriented - users should be able to easily and intuitively do everything using just the keyboard
 
 
-upcoming: equalizer
+upcoming: 
+    an equalizer and other mixing features
+
+-----------
+## LICENSE:
+This program is licensed under the GNU Affero General Public License, version 3. See [LICENSE](LICENSE) and [AGPL3.md](AGPL(AGPL3.md)3.md) for details
