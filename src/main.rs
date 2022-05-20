@@ -1,3 +1,4 @@
+#![feature(duration_constants)]
 #![allow(unused_imports)]
 use std::sync::Arc;
 use std::thread::sleep;
@@ -12,6 +13,9 @@ use parking_lot::RwLock;
 
 slint::include_modules!();
 
+// the seconds played so far in the current song. 
+//TODO: try to replace it with something else (using static mut to get it to work with the PeriodicAccess FnMut closure that needs to reset it to 0 at first run, and increment it every time afterwards)
+static mut TIME_PLAYED: isize = -1;
 
 fn main() {
     println!("Starting the program...");
@@ -41,7 +45,7 @@ fn main() {
         }
     });
 
-    const NULL_TAG_VALUE_STR: &str = "unknown";
+
 
     //function to be called in order to stop the current song and play a new one from the given file
     let fast_forward_to_new_song = |gui: MusicPlayerGUI, song_location, sink: &Arc<RwLock<Sink>>| {
@@ -52,6 +56,8 @@ fn main() {
             eprintln!("no primary tag found for tagged_file! Attempting to get first tag instead");
             tagged_file.first_tag().unwrap()
         });
+
+        const NULL_TAG_VALUE_STR: &str = "unknown";
 
         // display the current song's tag's artist
         //TODO: if not found in this tag, maybe look for other tags in the file and source from there?? Also check user-defined db when that's implemented (will override the rest if found)
@@ -135,6 +141,31 @@ fn main() {
     if is_paused {
         new_sink.pause();
     }
+
+    // add functionality so the GUI's accurately tracks the time remaining to the song
+        let gui_weak = gui.as_weak();
+        // set to -1 so the initial call will set it to 0. Otherwise, it'd always display 1 second more than it actually is
+        unsafe { TIME_PLAYED = -1; }
+        let src = src.periodic_access(Duration::SECOND,
+            move |_| {
+                let time_played = unsafe { 
+                    TIME_PLAYED += 1;
+                    TIME_PLAYED
+                };
+
+                
+                let secs = time_played % 60;
+                let mins = time_played / 60;
+                //NOTE: songs over an hour long will display the minutes of the song instead of hours plus the minutes mod 60. This is easy to change if deemed better to display the hours too
+                let length_string = format!("{}:{:02}", mins, secs);
+
+                gui_weak.upgrade_in_event_loop(
+                    move |handle| {
+                        handle.set_TimePlayed(length_string.into())
+                    }
+                );
+            }
+        );
 
     new_sink.append(src);
 
