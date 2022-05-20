@@ -17,4 +17,4 @@ upcoming:
 
 -----------
 ## LICENSE:
-This program is licensed under the GNU Affero General Public License, version 3. See [LICENSE](LICENSE) and [AGPL3.md](AGPL(AGPL3.md)3.md) for details
+This program is licensed under the GNU Affero General Public License, version 3. See [LICENSE](LICENSE) and [AGPL3.md](AGPL3.md) for details
